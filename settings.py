@@ -1,0 +1,1 @@
+API_URL = 'http://update.ouroboros-crypto.com'
