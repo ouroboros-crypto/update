@@ -61,16 +61,21 @@ def update(identifier, service_name, executables_path, ouroborosd_path):
     print('The script is running')
 
     while True:
-        tasks = fetch_tasks(identifier)
+        try:
+            tasks = fetch_tasks(identifier)
 
-        for raw_task in tasks:
-            task = tasks_factory(raw_task, identifier, service_name, executables_path, ouroborosd_path)
+            for raw_task in tasks:
+                task = tasks_factory(raw_task, identifier, service_name, executables_path, ouroborosd_path)
 
-            success, message = task.execute()
+                success, message = task.execute()
 
-            print('The {} task ended up with the {} status'.format(
-                raw_task['type'], success
-            ))
+                print('The {} task ended up with the {} status'.format(
+                    raw_task['type'], success
+                ))
+        except:
+            error_message = str(sys.exc_info()[1])
+
+            print("Error message while processing the tasks: {}".format(error_message))
 
         time.sleep(5)
 
