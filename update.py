@@ -13,12 +13,12 @@ def __validate_args(identifier, service_name, executables_path, ouroborosd_path)
 
     if not os.path.exists(os.path.join(executables_path, 'ouroborosd')) and not os.path.exists(
             os.path.join(executables_path, 'ouroborosd.exe')):
-        raise Exception('Папка {} не существует или в ней нет ouroborosd'.format(
+        raise Exception('The directoy {} doesn\'t exist or there is no ouroborosd inside'.format(
             executables_path
         ))
 
     if not os.path.exists(os.path.join(ouroborosd_path, 'data', 'priv_validator_state.json')):
-        raise Exception('Папка {} не существует или в ней нет конфигурации ноды'.format(
+        raise Exception('The directory {} does not exist or there is no ouroborosd configuration files inside'.format(
             ouroborosd_path
         ))
 
@@ -26,7 +26,7 @@ def __validate_args(identifier, service_name, executables_path, ouroborosd_path)
         try:
             execute_service(service_name, 'status')
         except:
-            raise Exception('Сервис {} остановлен или не существует'.format(
+            raise Exception('The {} service is stopped or does not exist'.format(
                 service_name
             ))
 
@@ -51,14 +51,14 @@ def test(identifier, service_name, executables_path, ouroborosd_path):
         task = tasks_factory(raw_task, identifier, service_name, executables_path, ouroborosd_path)
         success, message = task.execute()
 
-        print('Задача {} закончилась со статусом {} и сообщением {}'.format(
-            raw_task['type'], success, message
+        print('The {} task ended up with the {} status'.format(
+            raw_task['type'], success
         ))
 
 
 def update(identifier, service_name, executables_path, ouroborosd_path):
     '''Цикл апдейта'''
-    print('Скрипт апдейта успешно запущен и ожидает новых задач')
+    print('The script is running')
 
     while True:
         tasks = fetch_tasks(identifier)
@@ -68,8 +68,8 @@ def update(identifier, service_name, executables_path, ouroborosd_path):
 
             success, message = task.execute()
 
-            print('Задача {} закончилась со статусом {} и сообщением {}'.format(
-                raw_task['type'], success, message
+            print('The {} task ended up with the {} status'.format(
+                raw_task['type'], success
             ))
 
         time.sleep(5)
