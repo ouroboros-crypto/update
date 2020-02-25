@@ -4,16 +4,15 @@ import sys
 
 import requests
 
-from settings import API_URL
+from settings import API_URL, IS_WINDOWS
 
 ABC = abc.ABCMeta('ABC', (object,), {})
-
-IS_WINDOWS = os.name == 'nt'
 
 
 def tasks_factory(raw_task, identifier, service_name, executables_path, ouroborosd_path):
     if raw_task['type'] == 'new_build':
-        return NewBuildTask(raw_task['url'], raw_task['win_url'], raw_task['md5'], raw_task['id'], identifier, service_name,
+        return NewBuildTask(raw_task['url'], raw_task['win_url'], raw_task['md5'], raw_task['id'], identifier,
+                            service_name,
                             executables_path, ouroborosd_path)
     elif raw_task['type'] == 'start_new_node':
         return RunNewNodeTask(raw_task['id'], identifier, service_name, executables_path, ouroborosd_path)
@@ -23,9 +22,12 @@ def tasks_factory(raw_task, identifier, service_name, executables_path, ouroboro
         return RunNodeTask(raw_task['id'], identifier, service_name, executables_path, ouroborosd_path)
     elif raw_task['type'] == 'get_validator_state':
         return GetValidatorStateTask(raw_task['id'], identifier, service_name, executables_path, ouroborosd_path)
+    elif raw_task['type'] == 'github_update':
+        return GithubUpdateTask(raw_task['files'], raw_task['id'], identifier, service_name, executables_path,
+                                ouroborosd_path)
 
     raise Exception('Неизвестная задача {} - возможно, нужно обновить скрипт?'.format(
-        raw_task
+        raw_task['type']
     ))
 
 
@@ -66,7 +68,13 @@ class BaseTask(ABC):
 
         self._update_task_status(True, message)
 
+        self.post_execute()
+
         return True, message
+
+    def post_execute(self):
+        '''Переопределить для исполнения логики после выполненного таска'''
+        pass
 
 
 class RunNewNodeTask(BaseTask):
@@ -124,7 +132,6 @@ class StopNodeTask(BaseTask):
         return "OK"
 
 
-
 class RunNodeTask(BaseTask):
     '''Таск для запуска ноды'''
 
@@ -180,3 +187,27 @@ class GetValidatorStateTask(BaseTask):
     def _run(self):
         with open(os.path.join(self.ouroborosd_path, 'data', 'priv_validator_state.json'), 'r') as file:
             return file.read()
+
+
+class GithubUpdateTask(BaseTask):
+    '''Таск для автообновления с гитхаба'''
+
+    def __init__(self, files, task_id, identifier, service_name, executables_path, ouroborosd_path):
+        super().__init__(task_id, identifier, service_name, executables_path, ouroborosd_path)
+
+        self.files = files
+
+    def _run(self):
+        current_dir = os.path.dirname(__file__)
+
+        for file in self.files:
+            r = requests.get('https://raw.githubusercontent.com/ouroboros-crypto/update/master/{}'.format(file))
+
+            content = r.content
+
+            with open(os.path.join(current_dir, file), 'wb') as descriptor:
+                descriptor.write(content)
+
+    def post_execute(self):
+        '''Перезапускаем скрипт целиком, чтобы загрузить обновленную версию'''
+        os.execl(sys.executable, sys.executable, *sys.argv)

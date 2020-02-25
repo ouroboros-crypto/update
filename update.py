@@ -1,5 +1,6 @@
 import os
 import argparse
+import sys
 import time
 
 from helpers import fetch_tasks
@@ -7,6 +8,9 @@ from tasks import tasks_factory
 
 
 def __validate_args(identifier, service_name, executables_path, ouroborosd_path):
+    from settings import IS_WINDOWS
+    from helpers import execute_service
+
     if not os.path.exists(os.path.join(executables_path, 'ouroborosd')) and not os.path.exists(
             os.path.join(executables_path, 'ouroborosd.exe')):
         raise Exception('Папка {} не существует или в ней нет ouroborosd'.format(
@@ -17,6 +21,14 @@ def __validate_args(identifier, service_name, executables_path, ouroborosd_path)
         raise Exception('Папка {} не существует или в ней нет конфигурации ноды'.format(
             ouroborosd_path
         ))
+
+    if not IS_WINDOWS:
+        try:
+            execute_service(service_name, 'status')
+        except:
+            raise Exception('Сервис {} остановлен или не существует'.format(
+                service_name
+            ))
 
 
 def test(identifier, service_name, executables_path, ouroborosd_path):
@@ -46,13 +58,19 @@ def test(identifier, service_name, executables_path, ouroborosd_path):
 
 def update(identifier, service_name, executables_path, ouroborosd_path):
     '''Цикл апдейта'''
+    print('Скрипт апдейта успешно запущен и ожидает новых задач')
+
     while True:
         tasks = fetch_tasks(identifier)
 
         for raw_task in tasks:
             task = tasks_factory(raw_task, identifier, service_name, executables_path, ouroborosd_path)
 
-            task.execute()
+            success, message = task.execute()
+
+            print('Задача {} закончилась со статусом {} и сообщением {}'.format(
+                raw_task['type'], success, message
+            ))
 
         time.sleep(5)
 
