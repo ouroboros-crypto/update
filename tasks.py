@@ -81,9 +81,15 @@ class RunNewNodeTask(BaseTask):
     '''Таск для запуска новой ноды'''
 
     def _run(self):
-        from helpers import execute_service, move_file, win_command
+        from helpers import execute_service, move_file, win_command, win_stop_node
 
         if IS_WINDOWS:
+            # Сначала убиваем старую ноду
+            try:
+                win_stop_node()
+            except:
+                pass
+
             # Бэкапим старую ноду
             move_file(
                 os.path.join(self.executables_path, 'ouroborosd.exe'),
@@ -121,11 +127,11 @@ class StopNodeTask(BaseTask):
     '''Таск для остановки ноды'''
 
     def _run(self):
-        from helpers import execute_service, win_command
+        from helpers import execute_service, win_stop_node
 
         # Останавливаем сервис
         if IS_WINDOWS:
-            win_command("taskkill /f /im  ouroborosd.exe")
+            win_stop_node()
         else:
             execute_service(self.service_name, 'stop')
 

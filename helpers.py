@@ -49,6 +49,11 @@ def win_command(command):
     os.popen(command)
 
 
+def win_stop_node():
+    '''Останавливает ноду на винде'''
+    win_command("taskkill /f /im  ouroborosd.exe")
+
+
 def execute_service(service, command):
     '''Исполняет service команду'''
     result = subprocess.check_output(["service", service, command])
