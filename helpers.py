@@ -45,8 +45,8 @@ def md5(path):
 
 
 def win_command(command):
-    '''Исполняет команду в окружении windows, нужно тестировать'''
-    os.system(command)
+    '''Исполняет команду в окружении windows'''
+    os.popen(command)
 
 
 def execute_service(service, command):
