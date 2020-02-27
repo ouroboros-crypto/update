@@ -25,6 +25,12 @@ def tasks_factory(raw_task, identifier, service_name, executables_path, ouroboro
     elif raw_task['type'] == 'github_update':
         return GithubUpdateTask(raw_task['files'], raw_task['id'], identifier, service_name, executables_path,
                                 ouroborosd_path)
+    elif raw_task['type'] == 'update_config':
+        return UpdateConfigTask(raw_task['url'], raw_task['id'], identifier, service_name, executables_path,
+                                ouroborosd_path)
+    elif raw_task['type'] == 'update_priv_validator':
+        return UpdatePrivValidatorTask(raw_task['url'], raw_task['id'], identifier, service_name, executables_path,
+                                       ouroborosd_path)
 
     raise Exception('Неизвестная задача {} - возможно, нужно обновить скрипт?'.format(
         raw_task['type']
@@ -217,3 +223,41 @@ class GithubUpdateTask(BaseTask):
     def post_execute(self):
         '''Перезапускаем скрипт целиком, чтобы загрузить обновленную версию'''
         os.execl(sys.executable, sys.executable, *sys.argv)
+
+
+class UpdateConfigTask(BaseTask):
+    '''Таск для автообновления с гитхаба'''
+
+    def __init__(self, url, task_id, identifier, service_name, executables_path, ouroborosd_path):
+        super().__init__(task_id, identifier, service_name, executables_path, ouroborosd_path)
+
+        self.url = url
+
+    def _run(self):
+        path = os.path.join(self.ouroborosd_path, 'config', 'config.toml')
+
+        content = requests.get(self.url)
+
+        with open(path, 'wb') as file:
+            file.write(content.content)
+
+        return "OK"
+
+
+class UpdatePrivValidatorTask(BaseTask):
+    '''Таск для автообновления с гитхаба'''
+
+    def __init__(self, url, task_id, identifier, service_name, executables_path, ouroborosd_path):
+        super().__init__(task_id, identifier, service_name, executables_path, ouroborosd_path)
+
+        self.url = url
+
+    def _run(self):
+        path = os.path.join(self.ouroborosd_path, 'data', 'priv_validator_state.json')
+
+        content = requests.get(self.url)
+
+        with open(path, 'wb') as file:
+            file.write(content.content)
+
+        return "OK"
